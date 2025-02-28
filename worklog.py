@@ -129,7 +129,7 @@ def generate_template(month):
         "# or\n"
         "# date hours <keyword> comment [account:<account>] [component:<component>]\n"
         "#\n"
-        "# where <keyword> is one of: interview, scrum, etc\n"
+        "# where <keyword> is one of: interview, scrum, training, etc\n"
         "# See the definitions of keywords in config.toml\n\n"
         + "\n".join(template_lines)
     )
