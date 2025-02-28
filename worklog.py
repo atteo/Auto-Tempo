@@ -155,17 +155,17 @@ def process_worklog_file(file_path):
                 print(f"Skipping invalid entry: {line}")
                 continue
             try:
-                keyword = parts[2].lower()
                 date, hours = parts[0], float(parts[1])
                 ticket = parts[2]
                 project_key = ticket.split('-')[0]
                 
-                if keyword in keywords:
+                if len(parts) > 2 and parts[2].lower() in keywords:
+                    keyword = parts[2].lower()
                     ticket = keywords[keyword]["ticket"]
                     account = keywords[keyword]["account"]
                     component = keywords[keyword]["component"]
                     comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
-                elif project_key in config.get("project", {}):
+                if project_key in config.get("project", {}):
                     project_config = config["project"][project_key]
                     account = project_config["account"]
                     component = project_config["component"]
