@@ -98,7 +98,12 @@ def process_worklog_file(file_path):
                     component = "OrganizationalMatters"
                     comment = " ".join(parts[2:])
                     ticket = "WEW-416"
-                else:
+                elif len(parts) >= 3 and parts[1].lower() == "scrum":
+                    date, hours = parts[0], float(parts[2])
+                    ticket = "WEW-372"
+                    account = "INTAKE-54-DEV"
+                    component = "InPostPay"
+                    comment = " ".join(parts[3:])
                     date, ticket, hours, account, component = parts[:5]
                     comment = " ".join(parts[5:]) if len(parts) > 5 else ""
             except ValueError as e:
