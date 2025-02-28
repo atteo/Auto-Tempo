@@ -92,18 +92,18 @@ def process_worklog_file(file_path):
                 print(f"Skipping invalid entry: {line}")
                 continue
             try:
-                if len(parts) >= 3 and parts[1].lower() == "interview":
-                    date, hours = parts[0], float(parts[2])
+                if len(parts) >= 3 and parts[2].lower() == "interview":
+                    date, hours = parts[0], float(parts[1])
                     account = "002-ORGANI"
                     component = "OrganizationalMatters"
-                    comment = " ".join(parts[2:])
+                    comment = " ".join(parts[3:]).strip('"')
                     ticket = "WEW-416"
-                elif len(parts) >= 3 and parts[1].lower() == "scrum":
-                    date, hours = parts[0], float(parts[2])
+                elif len(parts) >= 3 and parts[2].lower() == "scrum":
+                    date, hours = parts[0], float(parts[1])
                     ticket = "WEW-372"
                     account = "INTAKE-54-DEV"
                     component = "InPostPay"
-                    comment = " ".join(parts[3:])
+                    comment = " ".join(parts[3:]).strip('"')
             except ValueError as e:
                 print(f"Skipping malformed entry: {line}, error: {e}")
                 continue
