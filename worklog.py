@@ -125,7 +125,7 @@ def generate_template(month):
 
     # Output template
     template_content = "\n".join(template_lines)
-    with open("worklog_template.txt", "w") as f:
+    with open(f"{month}.jira", "w") as f:
         f.write(template_content)
     print(template_content)
 def process_worklog_file(file_path):
