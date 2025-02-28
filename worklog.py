@@ -171,9 +171,13 @@ def process_worklog_file(file_path):
                     component = project_config["component"]
                     comment = " ".join(parts[3:]).strip('"')
                 else:
-                    account = parts[3]
-                    component = parts[4]
-                    comment = " ".join(parts[5:]).strip('"')
+                    if len(parts) >= 5:
+                        account = parts[3]
+                        component = parts[4]
+                        comment = " ".join(parts[5:]).strip('"')
+                    else:
+                        print(f"Skipping malformed entry: {line}, not enough parts to determine account and component.")
+                        continue
             except ValueError as e:
                 print(f"Skipping malformed entry: {line}, error: {e}")
                 continue
