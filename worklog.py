@@ -158,7 +158,9 @@ def process_worklog_file(file_path):
             try:
                 date, hours = parts[0], float(parts[1])
                 ticket_or_keyword = parts[2]
-                # If there is no dash in the ticket then it cannot be project_key, AI!
+                if '-' not in ticket_or_keyword:
+                    print(f"Skipping malformed entry: {line}, ticket does not contain a dash.")
+                    continue
                 project_key = ticket_or_keyword.split('-')[0]
                 
                 if project_key in config.get("project", {}):
