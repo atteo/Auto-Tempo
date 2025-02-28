@@ -33,11 +33,11 @@ def delete_worklogs_for_date(date):
             delete_url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs/{worklog['tempoWorklogId']}"
             delete_response = requests.delete(delete_url, headers=headers)
             if delete_response.status_code in [200, 204]:
-                print(f"Deleted worklog {worklog['tempoWorklogId']} for {ticket} on {date}.")
+                print(f"Deleted worklog {worklog['tempoWorklogId']} on {date}.")
             else:
                 print(f"Failed to delete worklog {worklog['tempoWorklogId']}: {delete_response.status_code} {delete_response.text}")
     else:
-        print(f"Failed to retrieve worklogs for {ticket} on {date}: {response.status_code} {response.text}")
+        print(f"Failed to retrieve worklogs on {date}: {response.status_code} {response.text}")
 
 def add_worklog(ticket, hours, account, component, date, comment=""):
 
