@@ -12,7 +12,7 @@ config = toml.load("config.toml")
 JIRA_URL = config["JIRA"]["JIRA_URL"]
 API_TOKEN = config["JIRA"]["API_TOKEN"]
 
-def delete_worklogs_for_date(ticket, date):
+def delete_worklogs_for_date(date):
     url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs/search"
     headers = {
         "Accept": "application/json",
@@ -22,7 +22,6 @@ def delete_worklogs_for_date(ticket, date):
     data = {
         "from": date,
         "to": date,
-        "taskKey": [ticket],
         "includeSubtasks": True
     }
     
@@ -101,7 +100,7 @@ def process_worklog_file(file_path):
                     date, ticket, hours, account, component = parts[:5]
                     comment = " ".join(parts[5:]) if len(parts) > 5 else ""
                 if date not in dates_processed:
-                    delete_worklogs_for_date(ticket, date)
+                    delete_worklogs_for_date(date)
                     dates_processed.add(date)
                 add_worklog(ticket, float(hours), account, component, date, comment)
             except ValueError as e:
