@@ -92,7 +92,7 @@ def process_worklog_file(file_path):
                     print(f"Skipping invalid entry: {line}")
                     continue
                 if len(parts) >= 3 and parts[1].lower() == "interview":
-                    date, hours = parts[:2]
+                    date, hours = parts[0], float(parts[2])
                     account = "002-ORGANI"
                     component = "OrganizationalMatters"
                     comment = " ".join(parts[2:])
