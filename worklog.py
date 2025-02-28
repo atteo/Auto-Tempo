@@ -79,6 +79,7 @@ def add_worklog(ticket, hours, account, component, date):
 def process_worklog_file(file_path):
     with open(file_path, "r") as f:
         dates_processed = set()
+        for line in f:
             line = line.strip()
             if not line or line.startswith("#"):  # Skip empty lines and comments
                 continue
