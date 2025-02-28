@@ -161,13 +161,14 @@ def process_worklog_file(file_path):
                 project_key = ticket_or_keyword.split('-')[0] if '-' in ticket_or_keyword else None
                 
                 if project_key and project_key in config.get("project", {}):
+                    ticket = ticket_or_keyword
                     project_config = config["project"][project_key]
                     account = project_config["account"]
                     component = project_config["component"]
                     comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
                 elif ticket_or_keyword.lower() in keywords:
                     keyword = parts[2].lower()
-                    ticket_or_keyword = keywords[keyword]["ticket"]
+                    ticket = keywords[keyword]["ticket"]
                     account = keywords[keyword]["account"]
                     component = keywords[keyword]["component"]
                     comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
@@ -186,7 +187,7 @@ def process_worklog_file(file_path):
             # Store worklog details for later processing
             if date not in dates_processed:
                 dates_processed[date] = []
-            dates_processed[date].append((ticket_or_keyword, float(hours), account, component, comment))
+            dates_processed[date].append((ticket, float(hours), account, component, comment))
     
     # Determine the date range for validation
     all_dates = list(daily_hours.keys())
@@ -210,8 +211,8 @@ def process_worklog_file(file_path):
     # Process worklogs only for valid dates
     for date in valid_dates:
         delete_worklogs_for_date(date)
-        for ticket_or_keyword, hours, account, component, comment in dates_processed[date]:
-            add_worklog(ticket_or_keyword, hours, account, component, date, comment)
+        for ticket, hours, account, component, comment in dates_processed[date]:
+            add_worklog(ticket, hours, account, component, date, comment)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Manage JIRA worklogs using Tempo.")
