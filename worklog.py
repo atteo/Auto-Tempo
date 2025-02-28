@@ -141,6 +141,7 @@ def generate_template(month):
         print(f"Template written to {file_name}")
     except FileExistsError:
         print(f"File {file_name} already exists. Template not written to avoid overwriting.")
+
 def process_worklog_file(file_path):
     dates_processed = {}
     daily_hours = {}
@@ -156,8 +157,9 @@ def process_worklog_file(file_path):
                 continue
             try:
                 date, hours = parts[0], float(parts[1])
-                ticket = parts[2]
-                project_key = ticket.split('-')[0]
+                ticket_or_keyword = parts[2]
+                # If there is no dash in the ticket then it cannot be project_key, AI!
+                project_key = ticket_or_keyword.split('-')[0]
                 
                 if project_key in config.get("project", {}):
                     project_config = config["project"][project_key]
@@ -166,7 +168,7 @@ def process_worklog_file(file_path):
                     comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
                 elif len(parts) > 2 and parts[2].lower() in keywords:
                     keyword = parts[2].lower()
-                    ticket = keywords[keyword]["ticket"]
+                    ticket_or_keyword = keywords[keyword]["ticket"]
                     account = keywords[keyword]["account"]
                     component = keywords[keyword]["component"]
                     comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
@@ -185,7 +187,7 @@ def process_worklog_file(file_path):
             # Store worklog details for later processing
             if date not in dates_processed:
                 dates_processed[date] = []
-            dates_processed[date].append((ticket, float(hours), account, component, comment))
+            dates_processed[date].append((ticket_or_keyword, float(hours), account, component, comment))
     
     # Determine the date range for validation
     all_dates = list(daily_hours.keys())
@@ -209,8 +211,8 @@ def process_worklog_file(file_path):
     # Process worklogs only for valid dates
     for date in valid_dates:
         delete_worklogs_for_date(date)
-        for ticket, hours, account, component, comment in dates_processed[date]:
-            add_worklog(ticket, hours, account, component, date, comment)
+        for ticket_or_keyword, hours, account, component, comment in dates_processed[date]:
+            add_worklog(ticket_or_keyword, hours, account, component, date, comment)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Manage JIRA worklogs using Tempo.")
