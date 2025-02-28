@@ -153,8 +153,7 @@ def process_worklog_file(file_path):
                 continue
             parts = line.split()
             if len(parts) < 3:
-                print(f"Skipping invalid entry: {line}")
-                continue
+                raise ValueError(f"Invalid entry: {line}")
             try:
                 date, hours = parts[0], float(parts[1])
                 ticket_or_keyword = parts[2]
@@ -173,11 +172,9 @@ def process_worklog_file(file_path):
                     component = keywords[keyword]["component"]
                     comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
                 else:
-                    print(f"Skipping malformed entry: {line}, not enough parts to determine account and component.")
-                    continue
+                    raise ValueError(f"Malformed entry: {line}, not enough parts to determine account and component.")
             except ValueError as e:
-                print(f"Skipping malformed entry: {line}, error: {e}")
-                continue
+                raise ValueError(f"Malformed entry: {line}, error: {e}")
 
             # Accumulate hours for each date
             if date not in daily_hours:
