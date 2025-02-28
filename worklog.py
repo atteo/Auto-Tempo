@@ -159,13 +159,17 @@ def process_worklog_file(file_path):
                 ticket = parts[2]
                 project_key = ticket.split('-')[0]
                 
-                if len(parts) > 2 and parts[2].lower() in keywords:
+                if project_key in config.get("project", {}):
+                    project_config = config["project"][project_key]
+                    account = project_config["account"]
+                    component = project_config["component"]
+                    comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
+                elif len(parts) > 2 and parts[2].lower() in keywords:
                     keyword = parts[2].lower()
                     ticket = keywords[keyword]["ticket"]
                     account = keywords[keyword]["account"]
                     component = keywords[keyword]["component"]
                     comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
-                if project_key in config.get("project", {}):
                     project_config = config["project"][project_key]
                     account = project_config["account"]
                     component = project_config["component"]
