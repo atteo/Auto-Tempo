@@ -88,11 +88,18 @@ def process_worklog_file(file_path):
                 continue
             try:
                 parts = line.split()
-                if len(parts) < 5:
+                if len(parts) < 3:
                     print(f"Skipping invalid entry: {line}")
                     continue
-                date, ticket, hours, account, component = parts[:5]
-                comment = " ".join(parts[5:]) if len(parts) > 5 else ""
+                if parts[1].lower() == "interview":
+                    date, hours = parts[:2]
+                    account = "002-ORGANI"
+                    component = "OrganizationalMatters"
+                    comment = " ".join(parts[2:])
+                    ticket = "INTERVIEW"
+                else:
+                    date, ticket, hours, account, component = parts[:5]
+                    comment = " ".join(parts[5:]) if len(parts) > 5 else ""
                 if date not in dates_processed:
                     delete_worklogs_for_date(ticket, date)
                     dates_processed.add(date)
