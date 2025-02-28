@@ -74,7 +74,7 @@ def add_worklog(ticket, hours, account, component, date, comment=""):
     response = requests.post(url, headers=headers, data=json.dumps(data))
     
     if response.status_code in [200, 201]:
-        print(f"Successfully logged {hours} hours to {ticket} on {date} with account {account} and component {component}.")
+        print(f"Successfully logged {hours} hours to {ticket} on {date} with account {account}, component {component}, and comment: {comment}.")
     else:
         print(f"Failed to log work for {ticket} on {date}: {response.status_code} {response.text}")
 
