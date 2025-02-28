@@ -13,18 +13,19 @@ JIRA_URL = config["JIRA"]["JIRA_URL"]
 API_TOKEN = config["JIRA"]["API_TOKEN"]
 
 def delete_worklogs_for_date(ticket, date):
-    url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs"
+    url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs/search"
     headers = {
         "Accept": "application/json",
         "Authorization": f"Bearer {API_TOKEN}"
     }
-    params = {
-        "originTaskId": ticket,
-        "dateFrom": date,
-        "dateTo": date
+    data = {
+        "from": date,
+        "to": date,
+        "taskKey": [ticket],
+        "includeSubtasks": True
     }
     
-    response = requests.get(url, headers=headers, params=params)
+    response = requests.post(url, headers=headers, data=json.dumps(data))
     
     if response.status_code == 200:
         worklogs = response.json()
