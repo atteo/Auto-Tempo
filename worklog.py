@@ -13,10 +13,6 @@ JIRA_URL = config["JIRA"]["JIRA_URL"]
 API_TOKEN = config["JIRA"]["API_TOKEN"]
 
 def worklog_exists(ticket, date):
-    if worklog_exists(ticket, date):
-        print(f"Worklog already exists for {ticket} on {date}. Skipping.")
-        return
-
     url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs"
     headers = {
         "Accept": "application/json",
@@ -36,6 +32,12 @@ def worklog_exists(ticket, date):
     else:
         print(f"Failed to check existing worklogs for {ticket} on {date}: {response.status_code} {response.text}")
         return False
+
+def add_worklog(ticket, hours, account, component, date):
+    if worklog_exists(ticket, date):
+        print(f"Worklog already exists for {ticket} on {date}. Skipping.")
+        return
+
     url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs"
     headers = {
         "Accept": "application/json",
