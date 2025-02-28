@@ -12,7 +12,30 @@ config = toml.load("config.toml")
 JIRA_URL = config["JIRA"]["JIRA_URL"]
 API_TOKEN = config["JIRA"]["API_TOKEN"]
 
-def add_worklog(ticket, hours, account, component, date):
+def worklog_exists(ticket, date):
+    if worklog_exists(ticket, date):
+        print(f"Worklog already exists for {ticket} on {date}. Skipping.")
+        return
+
+    url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs"
+    headers = {
+        "Accept": "application/json",
+        "Authorization": f"Bearer {API_TOKEN}"
+    }
+    params = {
+        "originTaskId": ticket,
+        "dateFrom": date,
+        "dateTo": date
+    }
+    
+    response = requests.get(url, headers=headers, params=params)
+    
+    if response.status_code == 200:
+        worklogs = response.json()
+        return len(worklogs) > 0
+    else:
+        print(f"Failed to check existing worklogs for {ticket} on {date}: {response.status_code} {response.text}")
+        return False
     url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs"
     headers = {
         "Accept": "application/json",
