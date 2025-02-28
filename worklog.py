@@ -174,7 +174,8 @@ def process_worklog_file(file_path):
                 else:
                     raise ValueError(f"Malformed entry: {line}, not enough parts to determine account and component.")
             except ValueError as e:
-                raise ValueError(f"Malformed entry: {line}, error: {e}")
+                print(f"Error processing line: {line}. Details: {e}")
+                return
 
             # Accumulate hours for each date
             if date not in daily_hours:
