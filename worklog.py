@@ -173,6 +173,14 @@ def process_worklog_file(file_path):
                     comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
                 else:
                     raise ValueError(f"Unknown project or keyword in entry: {line}.")
+
+                # Check for account and component overrides
+                if len(parts) > 3:
+                    for part in parts[3:]:
+                        if part.startswith("account:"):
+                            account = part.split(":", 1)[1]
+                        elif part.startswith("component:"):
+                            component = part.split(":", 1)[1]
             except ValueError as e:
                 print(f"Error processing line: {line}. {e}")
                 return
