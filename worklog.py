@@ -164,17 +164,17 @@ def process_worklog_file(file_path):
                     ticket = keywords[keyword]["ticket"]
                     account = keywords[keyword]["account"]
                     component = keywords[keyword]["component"]
-                    comment = " ".join(parts[3:]).strip('"')
+                    comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
                 elif project_key in config.get("project", {}):
                     project_config = config["project"][project_key]
                     account = project_config["account"]
                     component = project_config["component"]
-                    comment = " ".join(parts[3:]).strip('"')
+                    comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
                 else:
                     if len(parts) >= 5:
                         account = parts[3]
                         component = parts[4]
-                        comment = " ".join(parts[5:]).strip('"')
+                        comment = " ".join(parts[5:]).strip('"') if len(parts) > 5 else ""
                     else:
                         print(f"Skipping malformed entry: {line}, not enough parts to determine account and component.")
                         continue
