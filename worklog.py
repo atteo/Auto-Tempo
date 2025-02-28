@@ -156,12 +156,24 @@ def process_worklog_file(file_path):
                 continue
             try:
                 keyword = parts[2].lower()
+                date, hours = parts[0], float(parts[1])
+                ticket = parts[2]
+                project_key = ticket.split('-')[0]
+                
                 if keyword in keywords:
-                    date, hours = parts[0], float(parts[1])
                     ticket = keywords[keyword]["ticket"]
                     account = keywords[keyword]["account"]
                     component = keywords[keyword]["component"]
                     comment = " ".join(parts[3:]).strip('"')
+                elif project_key in config.get("project", {}):
+                    project_config = config["project"][project_key]
+                    account = project_config["account"]
+                    component = project_config["component"]
+                    comment = " ".join(parts[3:]).strip('"')
+                else:
+                    account = parts[3]
+                    component = parts[4]
+                    comment = " ".join(parts[5:]).strip('"')
             except ValueError as e:
                 print(f"Skipping malformed entry: {line}, error: {e}")
                 continue
