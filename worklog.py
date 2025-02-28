@@ -115,12 +115,16 @@ def process_worklog_file(file_path):
                 dates_processed[date] = []
             dates_processed[date].append((ticket, float(hours), account, component, comment))
     
-    # Validate and process worklogs
+    # Validate worklogs
+    valid_dates = []
     for date, total_hours in daily_hours.items():
         if total_hours != 8:
             print(f"Total logged hours for {date} is {total_hours}, which is not equal to 8. Skipping worklog application.")
-            continue
-        
+        else:
+            valid_dates.append(date)
+    
+    # Process worklogs only for valid dates
+    for date in valid_dates:
         delete_worklogs_for_date(date)
         for ticket, hours, account, component, comment in dates_processed[date]:
             add_worklog(ticket, hours, account, component, date, comment)
