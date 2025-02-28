@@ -172,9 +172,9 @@ def process_worklog_file(file_path):
                     component = keywords[keyword]["component"]
                     comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
                 else:
-                    raise ValueError(f"Malformed entry: {line}, not enough parts to determine account and component.")
+                    raise ValueError(f"Unknown project or keyword in entry: {line}.")
             except ValueError as e:
-                print(f"Error processing line: {line}. Details: {e}")
+                print(f"Error processing line: {line}. {e}")
                 return
 
             # Accumulate hours for each date
