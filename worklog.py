@@ -124,10 +124,23 @@ def generate_template(month):
         template_lines.append(f"{day} 8.0 jira-ticket account component \"comment\"")
 
     # Output template
-    template_content = "\n".join(template_lines)
-    with open(f"{month}.jira", "w") as f:
-        f.write(template_content)
-    print(template_content)
+    template_content = (
+        "# date hours jira-ticket account component comment\n"
+        "# or\n"
+        "# date hours <keyword> comment\n"
+        "#\n"
+        "# where <keyword> is one of: interview, scrum, etc\n"
+        "# See the definitions of keywords in config.toml\n\n"
+        + "\n".join(template_lines)
+    )
+    
+    file_name = f"{month}.jira"
+    try:
+        with open(file_name, "x") as f:
+            f.write(template_content)
+        print(f"Template written to {file_name}")
+    except FileExistsError:
+        print(f"File {file_name} already exists. Template not written to avoid overwriting.")
 def process_worklog_file(file_path):
     dates_processed = {}
     daily_hours = {}
