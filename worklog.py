@@ -80,7 +80,7 @@ def add_worklog(ticket, hours, account, component, date, comment=""):
 
 def process_worklog_file(file_path):
     with open(file_path, "r") as f:
-        dates_processed = set()
+        dates_processed = {}
         daily_hours = {}
         
         for line in f:
