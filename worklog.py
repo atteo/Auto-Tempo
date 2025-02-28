@@ -12,7 +12,7 @@ config = toml.load("config.toml")
 JIRA_URL = config["JIRA"]["JIRA_URL"]
 API_TOKEN = config["JIRA"]["API_TOKEN"]
 
-def worklog_exists(ticket, date):
+def delete_worklogs_for_date(ticket, date):
     url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs"
     headers = {
         "Accept": "application/json",
@@ -28,15 +28,17 @@ def worklog_exists(ticket, date):
     
     if response.status_code == 200:
         worklogs = response.json()
-        return len(worklogs) > 0
+        for worklog in worklogs:
+            delete_url = f"{url}/{worklog['tempoWorklogId']}"
+            delete_response = requests.delete(delete_url, headers=headers)
+            if delete_response.status_code in [200, 204]:
+                print(f"Deleted worklog {worklog['tempoWorklogId']} for {ticket} on {date}.")
+            else:
+                print(f"Failed to delete worklog {worklog['tempoWorklogId']}: {delete_response.status_code} {delete_response.text}")
     else:
-        print(f"Failed to check existing worklogs for {ticket} on {date}: {response.status_code} {response.text}")
-        return False
+        print(f"Failed to retrieve worklogs for {ticket} on {date}: {response.status_code} {response.text}")
 
 def add_worklog(ticket, hours, account, component, date):
-    if worklog_exists(ticket, date):
-        print(f"Worklog already exists for {ticket} on {date}. Skipping.")
-        return
 
     url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs"
     headers = {
@@ -76,7 +78,7 @@ def add_worklog(ticket, hours, account, component, date):
 
 def process_worklog_file(file_path):
     with open(file_path, "r") as f:
-        for line in f:
+        dates_processed = set()
             line = line.strip()
             if not line or line.startswith("#"):  # Skip empty lines and comments
                 continue
@@ -86,6 +88,9 @@ def process_worklog_file(file_path):
                     print(f"Skipping invalid entry: {line}")
                     continue
                 date, ticket, hours, account, component = parts
+                if date not in dates_processed:
+                    delete_worklogs_for_date(ticket, date)
+                    dates_processed.add(date)
                 add_worklog(ticket, float(hours), account, component, date)
             except ValueError as e:
                 print(f"Skipping malformed entry: {line}, error: {e}")
