@@ -27,8 +27,15 @@ def get_working_days(start_date, end_date):
         "userKeys": ["JIRAUSER55710"]
     }
     
+    try:
+        datetime.datetime.strptime(start_date, "%Y-%m-%d")
+        datetime.datetime.strptime(end_date, "%Y-%m-%d")
+    except ValueError as e:
+        print(f"Invalid date format: {e}")
+        return set()
+
     response = requests.post(url, headers=headers, data=json.dumps(data))
-    
+
     if response.status_code == 200:
         days_info = response.json()
         working_days = {day['date'] for day in days_info[0]['days'] if day['type'] == "WORKING_DAY"}
