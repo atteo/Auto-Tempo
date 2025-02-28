@@ -109,7 +109,23 @@ def add_worklog(ticket, hours, account, component, date, comment=""):
     else:
         print(f"Failed to log work for {ticket} on {date}: {response.status_code} {response.text}")
 
-def process_worklog_file(file_path):
+def generate_template(month):
+    # Determine the first and last day of the month
+    start_date = f"{month}-01"
+    end_date = (datetime.datetime.strptime(start_date, "%Y-%m-%d") + datetime.timedelta(days=31)).replace(day=1) - datetime.timedelta(days=1)
+    end_date = end_date.strftime("%Y-%m-%d")
+
+    # Get working days for the month
+    working_days = get_working_days(start_date, end_date)
+
+    # Generate template
+    template_lines = []
+    for day in sorted(working_days):
+        template_lines.append(f"{day} 8.0 jira-ticket account component \"comment\"")
+
+    # Output template
+    template_content = "\n".join(template_lines)
+    print(template_content)
     with open(file_path, "r") as f:
         dates_processed = {}
         daily_hours = {}
@@ -170,8 +186,20 @@ def process_worklog_file(file_path):
             add_worklog(ticket, hours, account, component, date, comment)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Add multiple worklogs to JIRA using Tempo from a structured text file.")
-    parser.add_argument("file", help="Path to the text file containing worklog entries")
-    
+    parser = argparse.ArgumentParser(description="Manage JIRA worklogs using Tempo.")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # Apply command
+    apply_parser = subparsers.add_parser("apply", help="Apply worklogs from a file")
+    apply_parser.add_argument("file", help="Path to the text file containing worklog entries")
+
+    # Generate command
+    generate_parser = subparsers.add_parser("generate", help="Generate a worklog template for a month")
+    generate_parser.add_argument("month", help="Month in the format YYYY-MM")
+
     args = parser.parse_args()
-    process_worklog_file(args.file)
+
+    if args.command == "apply":
+        process_worklog_file(args.file)
+    elif args.command == "generate":
+        generate_template(args.month)
