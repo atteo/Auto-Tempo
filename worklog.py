@@ -12,6 +12,8 @@ config = toml.load("config.toml")
 JIRA_URL = config["JIRA"]["JIRA_URL"]
 API_TOKEN = config["JIRA"]["API_TOKEN"]
 
+keywords = config["keyword"]
+
 def delete_worklogs_for_date(date):
     url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs/search"
     headers = {
@@ -92,17 +94,12 @@ def process_worklog_file(file_path):
                 print(f"Skipping invalid entry: {line}")
                 continue
             try:
-                if len(parts) >= 3 and parts[2].lower() == "interview":
+                keyword = parts[2].lower()
+                if keyword in keywords:
                     date, hours = parts[0], float(parts[1])
-                    account = "002-ORGANI"
-                    component = "OrganizationalMatters"
-                    comment = " ".join(parts[3:]).strip('"')
-                    ticket = "WEW-416"
-                elif len(parts) >= 3 and parts[2].lower() == "scrum":
-                    date, hours = parts[0], float(parts[1])
-                    ticket = "WEW-372"
-                    account = "INTAKE-54-DEV"
-                    component = "InPostPay"
+                    ticket = keywords[keyword]["ticket"]
+                    account = keywords[keyword]["account"]
+                    component = keywords[keyword]["component"]
                     comment = " ".join(parts[3:]).strip('"')
             except ValueError as e:
                 print(f"Skipping malformed entry: {line}, error: {e}")
