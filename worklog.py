@@ -121,11 +121,11 @@ def generate_template(month):
     # Generate template
     template_lines = []
     for day in sorted(working_days):
-        template_lines.append(f"{day} 8.0 jira-ticket account component \"comment\"")
+        template_lines.append(f"{day} 8.0 jira-ticket account component \"comment\" account:<account> component:<component>")
 
     # Output template
     template_content = (
-        "# date hours jira-ticket account component comment\n"
+        "# date hours jira-ticket account component comment [account:<account>] [component:<component>]\n"
         "# or\n"
         "# date hours <keyword> comment\n"
         "#\n"
