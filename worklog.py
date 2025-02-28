@@ -30,11 +30,11 @@ def delete_worklogs_for_date(ticket, date):
         worklogs = response.json()
         for worklog in worklogs:
             delete_url = f"{url}/{worklog['tempoWorklogId']}"
-            delete_response = requests.delete(delete_url, headers=headers)
-            if delete_response.status_code in [200, 204]:
-                print(f"Deleted worklog {worklog['tempoWorklogId']} for {ticket} on {date}.")
-            else:
-                print(f"Failed to delete worklog {worklog['tempoWorklogId']}: {delete_response.status_code} {delete_response.text}")
+            #delete_response = requests.delete(delete_url, headers=headers)
+            #if delete_response.status_code in [200, 204]:
+            print(f"Deleted worklog {worklog['tempoWorklogId']} for {ticket} on {date}.")
+            #else:
+            #    print(f"Failed to delete worklog {worklog['tempoWorklogId']}: {delete_response.status_code} {delete_response.text}")
     else:
         print(f"Failed to retrieve worklogs for {ticket} on {date}: {response.status_code} {response.text}")
 
