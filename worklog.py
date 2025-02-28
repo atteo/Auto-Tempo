@@ -126,7 +126,7 @@ def generate_template(month):
     # Output template
     template_content = "\n".join(template_lines)
     print(template_content)
-    with open(file_path, "r") as f:
+def process_worklog_file(file_path):
         dates_processed = {}
         daily_hours = {}
         
