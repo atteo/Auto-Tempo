@@ -158,17 +158,14 @@ def process_worklog_file(file_path):
             try:
                 date, hours = parts[0], float(parts[1])
                 ticket_or_keyword = parts[2]
-                if '-' not in ticket_or_keyword:
-                    print(f"Skipping malformed entry: {line}, ticket does not contain a dash.")
-                    continue
-                project_key = ticket_or_keyword.split('-')[0]
+                project_key = ticket_or_keyword.split('-')[0] if '-' in ticket_or_keyword else None
                 
-                if project_key in config.get("project", {}):
+                if project_key and project_key in config.get("project", {}):
                     project_config = config["project"][project_key]
                     account = project_config["account"]
                     component = project_config["component"]
                     comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
-                elif len(parts) > 2 and parts[2].lower() in keywords:
+                elif ticket_or_keyword.lower() in keywords:
                     keyword = parts[2].lower()
                     ticket_or_keyword = keywords[keyword]["ticket"]
                     account = keywords[keyword]["account"]
