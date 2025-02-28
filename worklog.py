@@ -104,8 +104,6 @@ def process_worklog_file(file_path):
                     account = "INTAKE-54-DEV"
                     component = "InPostPay"
                     comment = " ".join(parts[3:])
-                    date, ticket, hours, account, component = parts[:5]
-                    comment = " ".join(parts[5:]) if len(parts) > 5 else ""
             except ValueError as e:
                 print(f"Skipping malformed entry: {line}, error: {e}")
                 continue
