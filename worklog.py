@@ -124,6 +124,8 @@ def generate_template(month):
         template_lines.append(f"{day} 8.0 jira-ticket account component \"comment\"")
 
     # Output template
+    with open("worklog_template.txt", "w") as f:
+        f.write(template_content)
     template_content = "\n".join(template_lines)
     print(template_content)
 def process_worklog_file(file_path):
