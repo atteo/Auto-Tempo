@@ -96,7 +96,7 @@ def process_worklog_file(file_path):
                     account = "002-ORGANI"
                     component = "OrganizationalMatters"
                     comment = " ".join(parts[2:])
-                    ticket = "INTERVIEW-PLACEHOLDER"  # Replace with a valid issue key if available
+                    ticket = "WEW-416"
                 else:
                     date, ticket, hours, account, component = parts[:5]
                     comment = " ".join(parts[5:]) if len(parts) > 5 else ""
