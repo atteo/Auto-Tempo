@@ -81,6 +81,8 @@ def add_worklog(ticket, hours, account, component, date, comment=""):
 def process_worklog_file(file_path):
     with open(file_path, "r") as f:
         dates_processed = set()
+        daily_hours = {}
+        
         for line in f:
             line = line.strip()
             if not line or line.startswith("#"):  # Skip empty lines and comments
@@ -99,10 +101,25 @@ def process_worklog_file(file_path):
                 else:
                     date, ticket, hours, account, component = parts[:5]
                     comment = " ".join(parts[5:]) if len(parts) > 5 else ""
+                # Accumulate hours for each date
+                if date not in daily_hours:
+                    daily_hours[date] = 0
+                daily_hours[date] += float(hours)
+                
+                # Store worklog details for later processing
                 if date not in dates_processed:
-                    delete_worklogs_for_date(date)
-                    dates_processed.add(date)
-                add_worklog(ticket, float(hours), account, component, date, comment)
+                    dates_processed[date] = []
+                dates_processed[date].append((ticket, float(hours), account, component, comment))
+        
+        # Validate and process worklogs
+        for date, total_hours in daily_hours.items():
+            if total_hours != 8:
+                print(f"Total logged hours for {date} is {total_hours}, which is not equal to 8. Skipping worklog application.")
+                continue
+            
+            delete_worklogs_for_date(date)
+            for ticket, hours, account, component, comment in dates_processed[date]:
+                add_worklog(ticket, hours, account, component, date, comment)
             except ValueError as e:
                 print(f"Skipping malformed entry: {line}, error: {e}")
 
