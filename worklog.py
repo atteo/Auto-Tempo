@@ -31,7 +31,7 @@ def delete_worklogs_for_date(ticket, date):
     if response.status_code == 200:
         worklogs = response.json()
         for worklog in worklogs:
-            delete_url = f"{url}/{worklog['tempoWorklogId']}"
+            delete_url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs/{worklog['tempoWorklogId']}"
             delete_response = requests.delete(delete_url, headers=headers)
             if delete_response.status_code in [200, 204]:
                 print(f"Deleted worklog {worklog['tempoWorklogId']} for {ticket} on {date}.")
