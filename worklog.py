@@ -142,6 +142,51 @@ def generate_template(month):
     except FileExistsError:
         print(f"File {file_name} already exists. Template not written to avoid overwriting.")
 
+def parse_worklog_line(line):
+    parts = line.split()
+    if len(parts) < 3:
+        raise ValueError(f"Invalid entry: {line}")
+    
+    date, hours = parts[0], float(parts[1])
+    ticket_or_keyword = parts[2]
+    project_key = ticket_or_keyword.split('-')[0] if '-' in ticket_or_keyword else None
+
+    if project_key and project_key in config.get("project", {}):
+        ticket = ticket_or_keyword
+        project_config = config["project"][project_key]
+        account = project_config["account"]
+        component = project_config["component"]
+        comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
+    elif ticket_or_keyword.lower() in keywords:
+        keyword = parts[2].lower()
+        ticket = keywords[keyword]["ticket"]
+        account = keywords[keyword]["account"]
+        component = keywords[keyword]["component"]
+        comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
+    else:
+        raise ValueError(f"Unknown project or keyword in entry: {line}.")
+
+    # Check for account and component overrides
+    if len(parts) > 3:
+        for part in parts[3:]:
+            if part.startswith("account:"):
+                account = part.split(":", 1)[1]
+            elif part.startswith("component:"):
+                component = part.split(":", 1)[1]
+
+    return date, hours, ticket, account, component, comment
+
+def validate_worklogs(daily_hours, working_days):
+    valid_dates = []
+    for date, total_hours in daily_hours.items():
+        if date not in working_days:
+            print(f"{date} is a non-working day. Skipping worklog application.")
+        elif total_hours != 8:
+            print(f"Total logged hours for {date} is {total_hours}, which is not equal to 8. Skipping worklog application.")
+        else:
+            valid_dates.append(date)
+    return valid_dates
+
 def process_worklog_file(file_path):
     dates_processed = {}
     daily_hours = {}
@@ -151,36 +196,8 @@ def process_worklog_file(file_path):
             line = line.strip()
             if not line or line.startswith("#"):  # Skip empty lines and comments
                 continue
-            parts = line.split()
-            if len(parts) < 3:
-                raise ValueError(f"Invalid entry: {line}")
             try:
-                date, hours = parts[0], float(parts[1])
-                ticket_or_keyword = parts[2]
-                project_key = ticket_or_keyword.split('-')[0] if '-' in ticket_or_keyword else None
-                
-                if project_key and project_key in config.get("project", {}):
-                    ticket = ticket_or_keyword
-                    project_config = config["project"][project_key]
-                    account = project_config["account"]
-                    component = project_config["component"]
-                    comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
-                elif ticket_or_keyword.lower() in keywords:
-                    keyword = parts[2].lower()
-                    ticket = keywords[keyword]["ticket"]
-                    account = keywords[keyword]["account"]
-                    component = keywords[keyword]["component"]
-                    comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
-                else:
-                    raise ValueError(f"Unknown project or keyword in entry: {line}.")
-
-                # Check for account and component overrides
-                if len(parts) > 3:
-                    for part in parts[3:]:
-                        if part.startswith("account:"):
-                            account = part.split(":", 1)[1]
-                        elif part.startswith("component:"):
-                            component = part.split(":", 1)[1]
+                date, hours, ticket, account, component, comment = parse_worklog_line(line)
             except ValueError as e:
                 print(f"Error processing line: {line}. {e}")
                 return
@@ -205,14 +222,7 @@ def process_worklog_file(file_path):
         working_days = set()
 
     # Validate worklogs, ensuring no worklogs on non-working days
-    valid_dates = []
-    for date, total_hours in daily_hours.items():
-        if date not in working_days:
-            print(f"{date} is a non-working day. Skipping worklog application.")
-        elif total_hours != 8:
-            print(f"Total logged hours for {date} is {total_hours}, which is not equal to 8. Skipping worklog application.")
-        else:
-            valid_dates.append(date)
+    valid_dates = validate_worklogs(daily_hours, working_days)
     
     # Process worklogs only for valid dates
     for date in valid_dates:
