@@ -129,9 +129,10 @@ def generate_template(month):
     template_content = "\n".join(template_lines)
     print(template_content)
 def process_worklog_file(file_path):
-        dates_processed = {}
-        daily_hours = {}
-        
+    dates_processed = {}
+    daily_hours = {}
+    
+    with open(file_path, "r") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#"):  # Skip empty lines and comments
