@@ -182,7 +182,7 @@ def validate_worklogs(daily_hours, working_days):
         if date not in working_days:
             print(f"{date} is a non-working day. Skipping worklog application.")
         elif total_hours != 8:
-            print(f"Total logged hours for {date} is {total_hours}, which is not equal to 8. Skipping worklog application.")
+            raise ValueError(f"Total logged hours for {date} is {total_hours}, which is not equal to 8. Stopping worklog application.")
         else:
             valid_dates.append(date)
     return valid_dates
