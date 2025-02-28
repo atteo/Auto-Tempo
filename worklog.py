@@ -16,7 +16,8 @@ def delete_worklogs_for_date(ticket, date):
     url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs/search"
     headers = {
         "Accept": "application/json",
-        "Authorization": f"Bearer {API_TOKEN}"
+        "Authorization": f"Bearer {API_TOKEN}",
+        "Content-Type": "application/json"
     }
     data = {
         "from": date,
