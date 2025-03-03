@@ -240,7 +240,16 @@ def process_worklog_file(file_path):
         new_worklogs = dates_processed[date]
 
         # Compare existing and new worklogs by ticket, hours, account, component, and comment
-        existing_worklogs_list = sorted([(wl['issue']['key'], wl['timeSpentSeconds'] / 3600, wl['attributes']['_Initiative_']['value'], wl['attributes']['_Componenttool_']['value'], wl['comment']) for wl in existing_worklogs])
+        existing_worklogs_list = sorted([
+            (
+                wl['issue']['key'],
+                wl['timeSpentSeconds'] / 3600,
+                wl['attributes']['_Initiative_']['value'],
+                wl['attributes']['_Componenttool_']['value'],
+                "" if wl['comment'] == f"Working on issue {wl['issue']['key']}" else wl['comment']
+            )
+            for wl in existing_worklogs
+        ])
         new_worklogs_list = sorted([(ticket, hours, account, component, comment) for ticket, hours, account, component, comment in new_worklogs])
 
         if existing_worklogs_list != new_worklogs_list:
