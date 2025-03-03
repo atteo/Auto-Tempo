@@ -236,7 +236,6 @@ def process_worklog_file(file_path):
     # Process worklogs only for valid dates
     for date in valid_dates:
         existing_worklogs = get_existing_worklogs_for_date(date)
-        print(existing_worklogs)
         new_worklogs = dates_processed[date]
 
         # Compare existing and new worklogs by ticket, hours, account, component, and comment
