@@ -236,10 +236,11 @@ def process_worklog_file(file_path):
     # Process worklogs only for valid dates
     for date in valid_dates:
         existing_worklogs = get_existing_worklogs_for_date(date)
+        print(existing_worklogs)
         new_worklogs = dates_processed[date]
 
         # Compare existing and new worklogs by ticket, hours, account, component, and comment
-        existing_worklogs_list = sorted([(wl['originTaskId'], wl['timeSpentSeconds'] / 3600, wl['attributes']['_Initiative_']['value'], wl['attributes']['_Componenttool_']['value'], wl['comment']) for wl in existing_worklogs])
+        existing_worklogs_list = sorted([(wl['issue']['key'], wl['timeSpentSeconds'] / 3600, wl['attributes']['_Initiative_']['value'], wl['attributes']['_Componenttool_']['value'], wl['comment']) for wl in existing_worklogs])
         new_worklogs_list = sorted([(ticket, hours, account, component, comment) for ticket, hours, account, component, comment in new_worklogs])
 
         if existing_worklogs_list != new_worklogs_list:
