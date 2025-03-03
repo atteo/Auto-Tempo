@@ -63,31 +63,21 @@ def get_existing_worklogs_for_date(date):
     else:
         print(f"Failed to retrieve worklogs on {date}: {response.status_code} {response.text}")
         return []
-    url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs/search"
+
+def delete_worklogs(worklogs):
     headers = {
         "Accept": "application/json",
         "Authorization": f"Bearer {API_TOKEN}",
         "Content-Type": "application/json"
     }
-    data = {
-        "from": date,
-        "to": date,
-        "includeSubtasks": True
-    }
-    
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-    
-    if response.status_code == 200:
-        worklogs = response.json()
-        for worklog in worklogs:
-            delete_url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs/{worklog['tempoWorklogId']}"
-            delete_response = requests.delete(delete_url, headers=headers)
-            if delete_response.status_code in [200, 204]:
-                print(f"Deleted worklog {worklog['tempoWorklogId']} on {date}.")
-            else:
-                print(f"Failed to delete worklog {worklog['tempoWorklogId']}: {delete_response.status_code} {delete_response.text}")
-    else:
-        print(f"Failed to retrieve worklogs on {date}: {response.status_code} {response.text}")
+
+    for worklog in worklogs:
+        delete_url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs/{worklog['tempoWorklogId']}"
+        delete_response = requests.delete(delete_url, headers=headers)
+        if delete_response.status_code in [200, 204]:
+            print(f"Deleted worklog {worklog['tempoWorklogId']}.")
+        else:
+            print(f"Failed to delete worklog {worklog['tempoWorklogId']}: {delete_response.status_code} {delete_response.text}")
 
 def add_worklog(ticket, hours, account, component, date, comment=""):
 
@@ -250,7 +240,7 @@ def process_worklog_file(file_path):
 
         # Compare existing and new worklogs
         if existing_worklogs != new_worklogs:
-            delete_worklogs_for_date(date)
+            delete_worklogs(existing_worklogs)
             for ticket, hours, account, component, comment in new_worklogs:
                 add_worklog(ticket, hours, account, component, date, comment)
         else:
