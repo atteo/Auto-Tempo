@@ -243,6 +243,15 @@ def process_worklog_file(file_path):
         new_worklogs_list = sorted([(ticket, hours, account, component, comment) for ticket, hours, account, component, comment in new_worklogs])
 
         if existing_worklogs_list != new_worklogs_list:
+            # Print differences
+            existing_set = set(existing_worklogs_list)
+            new_set = set(new_worklogs_list)
+            print("Worklogs to be deleted:")
+            for worklog in existing_set - new_set:
+                print(worklog)
+            print("Worklogs to be added:")
+            for worklog in new_set - existing_set:
+                print(worklog)
             delete_worklogs(existing_worklogs)
             for ticket, hours, account, component, comment in new_worklogs:
                 add_worklog(ticket, hours, account, component, date, comment)
