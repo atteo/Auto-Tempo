@@ -43,7 +43,26 @@ def get_working_days(start_date, end_date):
     else:
         print(f"Failed to retrieve working days: {response.status_code} {response.text}")
         return set()
-def delete_worklogs_for_date(date):
+def get_existing_worklogs_for_date(date):
+    url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs/search"
+    headers = {
+        "Accept": "application/json",
+        "Authorization": f"Bearer {API_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "from": date,
+        "to": date,
+        "includeSubtasks": True
+    }
+    
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+    
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"Failed to retrieve worklogs on {date}: {response.status_code} {response.text}")
+        return []
     url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs/search"
     headers = {
         "Accept": "application/json",
@@ -226,9 +245,16 @@ def process_worklog_file(file_path):
     
     # Process worklogs only for valid dates
     for date in valid_dates:
-        delete_worklogs_for_date(date)
-        for ticket, hours, account, component, comment in dates_processed[date]:
-            add_worklog(ticket, hours, account, component, date, comment)
+        existing_worklogs = get_existing_worklogs_for_date(date)
+        new_worklogs = dates_processed[date]
+
+        # Compare existing and new worklogs
+        if existing_worklogs != new_worklogs:
+            delete_worklogs_for_date(date)
+            for ticket, hours, account, component, comment in new_worklogs:
+                add_worklog(ticket, hours, account, component, date, comment)
+        else:
+            print(f"No changes in worklogs for {date}. Skipping update.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Manage JIRA worklogs using Tempo.")
