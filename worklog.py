@@ -134,9 +134,9 @@ def generate_template(month):
 
     # Output template
     template_content = (
-        "# date hours jira-ticket comment [account:<account>] [component:<component>]\n"
+        "# date hours jira-ticket \"comment\" [account:<account>] [component:<component>]\n"
         "# or\n"
-        "# date hours <keyword> comment [account:<account>] [component:<component>]\n"
+        "# date hours <keyword> \"comment\" [account:<account>] [component:<component>]\n"
         "#\n"
         "# where <keyword> is one of: interview, scrum, training, etc\n"
         "# See the definitions of keywords in config.toml\n\n"
