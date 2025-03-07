@@ -7,12 +7,17 @@ import toml
 import datetime
 
 # Load configuration from file
-config = toml.load("config.toml")
-
-JIRA_URL = config["JIRA"]["JIRA_URL"]
-API_TOKEN = config["JIRA"]["API_TOKEN"]
-
-keywords = config["keyword"]
+try:
+    config = toml.load("config.toml")
+    JIRA_URL = config["JIRA"]["JIRA_URL"]
+    API_TOKEN = config["JIRA"]["API_TOKEN"]
+    keywords = config["keyword"]
+except KeyError as e:
+    print(f"Missing configuration key: {e}")
+    exit(1)
+except FileNotFoundError:
+    print("Configuration file not found.")
+    exit(1)
 
 def get_working_days(start_date, end_date):
     url = f"{JIRA_URL}/rest/tempo-timesheets/4/private/days/search"
@@ -56,12 +61,12 @@ def get_existing_worklogs_for_date(date):
         "includeSubtasks": True
     }
     
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-    
-    if response.status_code == 200:
+    try:
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        response.raise_for_status()
         return response.json()
-    else:
-        print(f"Failed to retrieve worklogs on {date}: {response.status_code} {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to retrieve worklogs on {date}: {e}")
         return []
 
 def delete_worklogs(worklogs):
@@ -111,12 +116,12 @@ def add_worklog(ticket, hours, account, component, date, comment=""):
         "includeNonWorkingDays": False
     }
     
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-    
-    if response.status_code in [200, 201]:
+    try:
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        response.raise_for_status()
         print(f"{date} Logged {hours}h to {ticket}, account {account}, component {component}, \"{comment}\".")
-    else:
-        print(f"Failed to log work for {ticket} on {date}: {response.status_code} {response.text}")
+    except requests.exceptions.RequestException as e:
+        print(f"Failed to log work for {ticket} on {date}: {e}")
 
 def generate_template(month):
     # Determine the first and last day of the month
