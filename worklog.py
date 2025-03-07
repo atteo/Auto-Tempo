@@ -12,6 +12,7 @@ try:
     JIRA_URL = config["JIRA"]["JIRA_URL"]
     API_TOKEN = config["JIRA"]["API_TOKEN"]
     keywords = config["keyword"]
+    EMAIL = config["user"]["email"]
 except KeyError as e:
     print(f"Missing configuration key: {e}")
     exit(1)
@@ -284,9 +285,39 @@ if __name__ == "__main__":
     generate_parser = subparsers.add_parser("generate", help="Generate a worklog template for a month")
     generate_parser.add_argument("month", help="Month in the format YYYY-MM")
 
+    # Inspect command
+    inspect_parser = subparsers.add_parser("inspect", help="Inspect a Git repository and generate worklog based on commits")
+    inspect_parser.add_argument("repo_path", help="Path to the Git repository")
+
     args = parser.parse_args()
 
     if args.command == "apply":
         process_worklog_file(args.file)
     elif args.command == "generate":
         generate_template(args.month)
+def inspect_git_repo(repo_path):
+    import subprocess
+
+    # Get the list of commits authored by the user
+    try:
+        result = subprocess.run(
+            ["git", "-C", repo_path, "log", "--author", EMAIL, "--pretty=format:%H %ad %s", "--date=short"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        commits = result.stdout.strip().split("\n")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to retrieve commits: {e}")
+        return
+
+    # Generate worklog from commits
+    worklog_lines = []
+    for commit in commits:
+        commit_hash, date, message = commit.split(" ", 2)
+        worklog_lines.append(f"{date} 8.0 {commit_hash} \"{message}\"")
+
+    # Output worklog
+    worklog_content = "\n".join(worklog_lines)
+    print("Generated worklog based on commits:")
+    print(worklog_content)
