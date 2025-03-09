@@ -290,13 +290,53 @@ if __name__ == "__main__":
     inspect_parser = subparsers.add_parser("inspect", help="Inspect a Git repository and generate worklog based on commits")
     inspect_parser.add_argument("repo_path", help="Path to the Git repository")
 
+    # Validate command
+    validate_parser = subparsers.add_parser("validate", help="Validate worklogs from a file without applying them")
+    validate_parser.add_argument("file", help="Path to the text file containing worklog entries")
+
     args = parser.parse_args()
 
     if args.command == "apply":
         process_worklog_file(args.file)
     elif args.command == "generate":
+    elif args.command == "validate":
+        validate_worklog_file(args.file)
         generate_template(args.month)
-def inspect_git_repo(repo_path):
+def validate_worklog_file(file_path):
+    dates_processed = {}
+    daily_hours = {}
+    
+    with open(file_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):  # Skip empty lines and comments
+                continue
+            try:
+                date, hours, ticket, account, component, comment = parse_worklog_line(line)
+            except ValueError as e:
+                print(f"Error processing line: {line}. {e}")
+                return
+
+            # Accumulate hours for each date
+            if date not in daily_hours:
+                daily_hours[date] = 0
+            daily_hours[date] += float(hours)
+    
+    # Determine the date range for validation
+    all_dates = list(daily_hours.keys())
+    if all_dates:
+        start_date = min(all_dates)
+        end_date = max(all_dates)
+        working_days = get_working_days(start_date, end_date)
+    else:
+        working_days = set()
+
+    # Validate worklogs, ensuring no worklogs on non-working days
+    try:
+        validate_worklogs(daily_hours, working_days)
+        print("Worklogs are valid.")
+    except ValueError as e:
+        print(f"Validation error: {e}")
     import subprocess
 
     # Get the list of commits authored by the user
