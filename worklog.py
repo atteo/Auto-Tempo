@@ -49,6 +49,7 @@ def get_working_days(start_date, end_date):
     else:
         print(f"Failed to retrieve working days: {response.status_code} {response.text}")
         return set()
+
 def get_existing_worklogs_for_date(date):
     url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs/search"
     headers = {
