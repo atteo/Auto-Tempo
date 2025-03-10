@@ -274,34 +274,6 @@ def process_worklog_file(file_path):
         else:
             print(f"No changes in worklogs for {date}. Skipping update.")
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Manage JIRA worklogs using Tempo.")
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    # Apply command
-    apply_parser = subparsers.add_parser("apply", help="Apply worklogs from a file")
-    apply_parser.add_argument("file", help="Path to the text file containing worklog entries")
-
-    # Generate command
-    generate_parser = subparsers.add_parser("generate", help="Generate a worklog template for a month")
-    generate_parser.add_argument("month", help="Month in the format YYYY-MM")
-
-    # Inspect command
-    inspect_parser = subparsers.add_parser("inspect", help="Inspect a Git repository and generate worklog based on commits")
-    inspect_parser.add_argument("repo_path", help="Path to the Git repository")
-
-    # Validate command
-    validate_parser = subparsers.add_parser("validate", help="Validate worklogs from a file without applying them")
-    validate_parser.add_argument("file", help="Path to the text file containing worklog entries")
-
-    args = parser.parse_args()
-
-    if args.command == "apply":
-        process_worklog_file(args.file)
-    elif args.command == "generate":
-    elif args.command == "validate":
-        validate_worklog_file(args.file)
-        generate_template(args.month)
 def validate_worklog_file(file_path):
     dates_processed = {}
     daily_hours = {}
@@ -337,6 +309,8 @@ def validate_worklog_file(file_path):
         print("Worklogs are valid.")
     except ValueError as e:
         print(f"Validation error: {e}")
+
+def inspect_git_repo(repo_path):
     import subprocess
 
     # Get the list of commits authored by the user
@@ -362,3 +336,34 @@ def validate_worklog_file(file_path):
     worklog_content = "\n".join(worklog_lines)
     print("Generated worklog based on commits:")
     print(worklog_content)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Manage JIRA worklogs using Tempo.")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # Apply command
+    apply_parser = subparsers.add_parser("apply", help="Apply worklogs from a file")
+    apply_parser.add_argument("file", help="Path to the text file containing worklog entries")
+
+    # Generate command
+    generate_parser = subparsers.add_parser("generate", help="Generate a worklog template for a month")
+    generate_parser.add_argument("month", help="Month in the format YYYY-MM")
+
+    # Inspect command
+    inspect_parser = subparsers.add_parser("inspect", help="Inspect a Git repository and generate worklog based on commits")
+    inspect_parser.add_argument("repo_path", help="Path to the Git repository")
+
+    # Validate command
+    validate_parser = subparsers.add_parser("validate", help="Validate worklogs from a file without applying them")
+    validate_parser.add_argument("file", help="Path to the text file containing worklog entries")
+
+    args = parser.parse_args()
+
+    if args.command == "apply":
+        process_worklog_file(args.file)
+    elif args.command == "validate":
+        validate_worklog_file(args.file)
+    elif args.command == "generate":
+        generate_template(args.month)
+
