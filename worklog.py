@@ -13,6 +13,7 @@ try:
     API_TOKEN = config["JIRA"]["API_TOKEN"]
     keywords = config["keyword"]
     EMAIL = config["user"]["email"]
+    WORKER = config["user"]["worker"]
 except KeyError as e:
     print(f"Missing configuration key: {e}")
     exit(1)
@@ -61,7 +62,7 @@ def get_existing_worklogs_for_date(date):
         "from": date,
         "to": date,
         "includeSubtasks": True,
-        "worker": "JIRAUSER55710"  # Adjust based on actual user ID if needed
+        "worker": WORKER
     }
     
     try:
@@ -100,7 +101,7 @@ def add_worklog(ticket, hours, account, component, date, comment=""):
     data = {
         "originTaskId": ticket,
         "timeSpentSeconds": time_spent,
-        "worker": "JIRAUSER55710",  # Adjust based on actual user ID if needed
+        "worker": WORKER,
         "comment": comment,
         "attributes": {
             "_Initiative_": {
