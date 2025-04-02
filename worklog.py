@@ -60,7 +60,8 @@ def get_existing_worklogs_for_date(date):
     data = {
         "from": date,
         "to": date,
-        "includeSubtasks": True
+        "includeSubtasks": True,
+        "worker": "JIRAUSER55710"  # Adjust based on actual user ID if needed
     }
     
     try:
