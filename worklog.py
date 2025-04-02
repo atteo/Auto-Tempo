@@ -6,6 +6,18 @@ import json
 import toml
 import datetime
 
+class FatalError(Exception):
+    """Custom exception for fatal errors."""
+    def __init__(self, message, original_exception=None):
+        super().__init__(message)
+        self.original_exception = original_exception
+
+    def __str__(self):
+        if self.original_exception:
+            return f"{super().__str__()} (original exception: {self.original_exception})"
+        return super().__str__()
+
+
 # Load configuration from file
 try:
     config = toml.load("config.toml")
@@ -48,8 +60,7 @@ def get_working_days(start_date, end_date):
         working_days = {day['date'] for day in days_info[0]['days'] if day['type'] == "WORKING_DAY"}
         return working_days
     else:
-        print(f"Failed to retrieve working days: {response.status_code} {response.text}")
-        return set()
+        raise FatalError(f"Failed to retrieve working days: {response.status_code} {response.text}", response)
 
 def get_existing_worklogs_for_date(date):
     url = f"{JIRA_URL}/rest/tempo-timesheets/4/worklogs/search"
@@ -62,7 +73,7 @@ def get_existing_worklogs_for_date(date):
         "from": date,
         "to": date,
         "includeSubtasks": True,
-        "worker": WORKER
+        "worker": [ WORKER ]
     }
     
     try:
@@ -70,8 +81,7 @@ def get_existing_worklogs_for_date(date):
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"Failed to retrieve worklogs on {date}: {e}")
-        return []
+        raise FatalError(f"Failed to retrieve worklogs for {date}", e)
 
 def delete_worklogs(worklogs):
     headers = {
@@ -86,7 +96,7 @@ def delete_worklogs(worklogs):
         if delete_response.status_code in [200, 204]:
             print(f"Deleted worklog {worklog['tempoWorklogId']}.")
         else:
-            print(f"Failed to delete worklog {worklog['tempoWorklogId']}: {delete_response.status_code} {delete_response.text}")
+            raise FatalError(f"Failed to delete worklog {worklog['tempoWorklogId']}: {delete_response.status_code} {delete_response.text}", delete_response)
 
 def add_worklog(ticket, hours, account, component, date, comment=""):
 
@@ -125,7 +135,7 @@ def add_worklog(ticket, hours, account, component, date, comment=""):
         response.raise_for_status()
         print(f"{date} Logged {hours}h to {ticket}, account {account}, component {component}, \"{comment}\".")
     except requests.exceptions.RequestException as e:
-        print(f"Failed to log work for {ticket} on {date}: {e}")
+        raise FatalError(f"Failed to log work for {ticket} on {date}: {e}", e)
 
 def generate_template(month):
     # Determine the first and last day of the month
@@ -325,8 +335,7 @@ def inspect_git_repo(repo_path):
         )
         commits = result.stdout.strip().split("\n")
     except subprocess.CalledProcessError as e:
-        print(f"Failed to retrieve commits: {e}")
-        return
+        raise FatalError(f"Failed to retrieve commits from Git repository: {e}", e)
 
     # Generate worklog from commits
     worklog_lines = []
@@ -341,31 +350,38 @@ def inspect_git_repo(repo_path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Manage JIRA worklogs using Tempo.")
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    try:
+        parser = argparse.ArgumentParser(description="Manage JIRA worklogs using Tempo.")
+        subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # Apply command
-    apply_parser = subparsers.add_parser("apply", help="Apply worklogs from a file")
-    apply_parser.add_argument("file", help="Path to the text file containing worklog entries")
+        # Apply command
+        apply_parser = subparsers.add_parser("apply", help="Apply worklogs from a file")
+        apply_parser.add_argument("file", help="Path to the text file containing worklog entries")
 
-    # Generate command
-    generate_parser = subparsers.add_parser("generate", help="Generate a worklog template for a month")
-    generate_parser.add_argument("month", help="Month in the format YYYY-MM")
+        # Generate command
+        generate_parser = subparsers.add_parser("generate", help="Generate a worklog template for a month")
+        generate_parser.add_argument("month", help="Month in the format YYYY-MM")
 
-    # Inspect command
-    inspect_parser = subparsers.add_parser("inspect", help="Inspect a Git repository and generate worklog based on commits")
-    inspect_parser.add_argument("repo_path", help="Path to the Git repository")
+        # Inspect command
+        inspect_parser = subparsers.add_parser("inspect", help="Inspect a Git repository and generate worklog based on commits")
+        inspect_parser.add_argument("repo_path", help="Path to the Git repository")
 
-    # Validate command
-    validate_parser = subparsers.add_parser("validate", help="Validate worklogs from a file without applying them")
-    validate_parser.add_argument("file", help="Path to the text file containing worklog entries")
+        # Validate command
+        validate_parser = subparsers.add_parser("validate", help="Validate worklogs from a file without applying them")
+        validate_parser.add_argument("file", help="Path to the text file containing worklog entries")
 
-    args = parser.parse_args()
+        args = parser.parse_args()
 
-    if args.command == "apply":
-        process_worklog_file(args.file)
-    elif args.command == "validate":
-        validate_worklog_file(args.file)
-    elif args.command == "generate":
-        generate_template(args.month)
+        if args.command == "apply":
+            process_worklog_file(args.file)
+        elif args.command == "validate":
+            validate_worklog_file(args.file)
+        elif args.command == "generate":
+            generate_template(args.month)
+    except FatalError as e:
+        print(f"Fatal error: {e}")
+        exit(1)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        exit(1)
 
