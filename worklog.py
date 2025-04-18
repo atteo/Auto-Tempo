@@ -376,6 +376,10 @@ if __name__ == "__main__":
 
         args = parser.parse_args()
 
+        if args.command == "help":
+            parser.print_help()
+            exit(0)
+
         if args.command == "apply":
             process_worklog_file(args.file)
         elif args.command == "validate":
