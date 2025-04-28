@@ -29,7 +29,36 @@ except KeyError as e:
     print(f"Missing configuration key: {e}")
     exit(1)
 except FileNotFoundError:
-    print("Configuration file not found.")
+    config_template = """
+[JIRA]
+JIRA_URL = "https://your-jira-instance.atlassian.net" # Replace with your JIRA URL
+API_TOKEN = "your-api-token"                          # Replace with your JIRA API Token
+
+[user]
+email = "your-email@example.com"                      # Your email address (used for git inspect)
+
+# Define keywords for common tasks (optional)
+[keyword.meeting]
+ticket = "INTERNAL-123"
+account = "001-GEN"
+component = "Meetings"
+
+[keyword.training]
+ticket = "INTERNAL-456"
+account = "001-GEN"
+component = "Learning"
+
+# Define default account/component for specific JIRA projects (optional)
+[project.PROJ]
+account = "002-PROJ"
+component = "Project"
+"""
+    print("Configuration file 'config.toml' not found.")
+    print("")
+    print("Please create 'config.toml' in the same directory as the script with the following content:")
+    print("-" * 40)
+    print(config_template.strip())
+    print("-" * 40)
     exit(1)
 
 # Global variable for WORKER ID, fetched from JIRA
