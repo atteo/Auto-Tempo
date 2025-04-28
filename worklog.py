@@ -25,13 +25,32 @@ try:
     API_TOKEN = config["JIRA"]["API_TOKEN"]
     keywords = config["keyword"]
     EMAIL = config["user"]["email"]
-    WORKER = config["user"]["worker"]
 except KeyError as e:
     print(f"Missing configuration key: {e}")
     exit(1)
 except FileNotFoundError:
     print("Configuration file not found.")
     exit(1)
+
+# Global variable for WORKER ID, fetched from JIRA
+WORKER = None
+
+def get_current_user_worker_id():
+    """Fetches the current user's JIRA key (worker ID) using the API token."""
+    url = f"{JIRA_URL}/rest/api/2/myself"
+    headers = {
+        "Accept": "application/json",
+        "Authorization": f"Bearer {API_TOKEN}"
+    }
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        user_info = response.json()
+        return user_info.get("key")
+    except requests.exceptions.RequestException as e:
+        raise FatalError("Failed to retrieve current user information from JIRA", e)
+    except KeyError:
+        raise FatalError("Could not find 'key' in JIRA user information response")
 
 def get_working_days(start_date, end_date):
     url = f"{JIRA_URL}/rest/tempo-timesheets/4/private/days/search"
@@ -355,6 +374,12 @@ def inspect_git_repo(repo_path):
 
 if __name__ == "__main__":
     try:
+        # Fetch the WORKER ID after loading config and before parsing args
+        WORKER = get_current_user_worker_id()
+        if not WORKER:
+            raise FatalError("Could not determine WORKER ID from JIRA.")
+        print(f"Operating as JIRA user: {WORKER}")
+
         parser = argparse.ArgumentParser(description="Manage JIRA worklogs using Tempo.")
         subparsers = parser.add_subparsers(dest="command", required=True)
 
