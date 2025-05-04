@@ -319,22 +319,37 @@ def process_worklog_file(file_path):
         new_worklogs_list = sorted([(ticket, hours, account, component, comment) for ticket, hours, account, component, comment in new_worklogs])
 
         if existing_worklogs_list != new_worklogs_list:
-            # Print differences
-            existing_set = set(existing_worklogs_list)
-            new_set = set(new_worklogs_list)
-            print("Worklogs to be deleted:")
-            for worklog in existing_set - new_set:
-                print(worklog)
-            print("Worklogs to be added:")
-            for worklog in new_set - existing_set:
-                print(worklog)
-            confirm = input(f"Are you sure you want to delete existing worklogs for {date}? (yes/no): ").strip().lower()
-            if confirm == 'yes':
-                delete_worklogs(existing_worklogs)
+            # Only proceed with deletion/addition if there are changes
+            if existing_worklogs:
+                # Print differences
+                existing_set = set(existing_worklogs_list)
+                new_set = set(new_worklogs_list)
+                print(f"Differences found for {date}:")
+                to_delete = existing_set - new_set
+                to_add = new_set - existing_set
+                if to_delete:
+                    print("Worklogs to be deleted:")
+                    for worklog in to_delete:
+                        print(worklog)
+                if to_add:
+                    print("Worklogs to be added:")
+                    for worklog in to_add:
+                        print(worklog)
+
+                confirm = input(f"Are you sure you want to delete existing worklogs for {date} and apply changes? (yes/no): ").strip().lower()
+                if confirm == 'yes':
+                    delete_worklogs(existing_worklogs)
+                    for ticket, hours, account, component, comment in new_worklogs:
+                        add_worklog(ticket, hours, account, component, date, comment)
+                else:
+                    print(f"Skipping update for {date}.")
+            else:
+                # No existing worklogs, just add the new ones
+                print(f"No existing worklogs for {date}. Adding new worklogs:")
+                for worklog in new_worklogs_list:
+                    print(worklog)
                 for ticket, hours, account, component, comment in new_worklogs:
                     add_worklog(ticket, hours, account, component, date, comment)
-            else:
-                print(f"Skipping deletion of worklogs for {date}.")
         else:
             print(f"No changes in worklogs for {date}. Skipping update.")
 
