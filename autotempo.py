@@ -336,13 +336,12 @@ def process_worklog_file(file_path):
                     for worklog in to_add:
                         print(worklog)
 
-                confirm = input(f"Are you sure you want to delete existing worklogs for {date} and apply changes? (yes/no): ").strip().lower()
-                if confirm == 'yes':
-                    delete_worklogs(existing_worklogs)
-                    for ticket, hours, account, component, comment in new_worklogs:
-                        add_worklog(ticket, hours, account, component, date, comment)
-                else:
-                    print(f"Skipping update for {date}.")
+                if to_delete:
+                    confirm = input(f"Are you sure you want to delete existing worklogs for {date} and apply changes? (yes/no): ").strip().lower()
+                    if confirm == 'yes':
+                        delete_worklogs(existing_worklogs)
+                for ticket, hours, account, component, comment in new_worklogs:
+                    add_worklog(ticket, hours, account, component, date, comment)
             else:
                 # No existing worklogs, just add the new ones
                 print(f"No existing worklogs for {date}. Adding new worklogs:")

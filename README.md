@@ -1,4 +1,4 @@
-# JIRA Worklog Manager
+# AutoTempo - JIRA Worklog Manager
 
 This script helps manage JIRA worklogs using the Tempo Timesheets API. It allows you to generate worklog templates, validate worklog files, and apply worklogs to JIRA based on a simple text file format.
 
