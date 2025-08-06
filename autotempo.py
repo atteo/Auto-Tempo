@@ -223,7 +223,10 @@ def parse_worklog_line(line):
     if len(parts) < 3:
         raise ValueError(f"Invalid entry: {line}")
     
-    date, hours = parts[0], float(parts[1])
+    date = parts[0]
+    hours_str = parts[1]
+    is_overtime = hours_str.startswith('+')
+    hours = float(hours_str)
     ticket_or_keyword = parts[2]
     project_key = ticket_or_keyword.split('-')[0] if '-' in ticket_or_keyword else None
 
@@ -232,35 +235,47 @@ def parse_worklog_line(line):
         project_config = config["project"][project_key]
         account = project_config["account"]
         component = project_config["component"]
-        comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
     elif ticket_or_keyword.lower() in keywords:
         keyword = parts[2].lower()
         ticket = keywords[keyword]["ticket"]
         account = keywords[keyword]["account"]
         component = keywords[keyword]["component"]
-        comment = " ".join(parts[3:]).strip('"') if len(parts) > 3 else ""
     else:
         raise ValueError(f"Unknown project or keyword in entry: {line}.")
 
-    # Check for account and component overrides
+    # Parse comment and overrides
+    comment_parts = []
+    override_parts = []
     if len(parts) > 3:
         for part in parts[3:]:
-            if part.startswith("account:"):
-                account = part.split(":", 1)[1]
-            elif part.startswith("component:"):
-                component = part.split(":", 1)[1]
+            if part.startswith("account:") or part.startswith("component:"):
+                override_parts.append(part)
+            else:
+                comment_parts.append(part)
+    comment = " ".join(comment_parts).strip('"')
 
-    return date, hours, ticket, account, component, comment
+    # Apply overrides
+    for op in override_parts:
+        if op.startswith("account:"):
+            account = op.split(":", 1)[1]
+        elif op.startswith("component:"):
+            component = op.split(":", 1)[1]
 
-def validate_worklogs(daily_hours, working_days):
+    return date, hours, ticket, account, component, comment, is_overtime
+
+def validate_worklogs(all_dates, daily_hours, working_days):
     valid_dates = []
-    for date, total_hours in daily_hours.items():
-        if date not in working_days:
-            print(f"{date} is a non-working day. Skipping worklog application.")
-        elif total_hours != 8:
-            raise ValueError(f"Total logged hours for {date} is {total_hours}, which is not equal to 8. Stopping worklog application.")
-        else:
+    for date in sorted(all_dates):
+        total_hours = daily_hours.get(date, 0)
+        if date in working_days:
+            if total_hours != 8:
+                raise ValueError(f"Total non-overtime logged hours for {date} is {total_hours}, which is not equal to 8. Stopping worklog application.")
             valid_dates.append(date)
+        else:
+            if total_hours != 0:
+                raise ValueError(f"Non-overtime hours logged on non-working day {date} ({total_hours} hours). Stopping worklog application.")
+            else:
+                valid_dates.append(date)
     return valid_dates
 
 def process_worklog_file(file_path):
@@ -273,7 +288,7 @@ def process_worklog_file(file_path):
             if not line or line.startswith("#"):  # Skip empty lines and comments
                 continue
             try:
-                date, hours, ticket, account, component, comment = parse_worklog_line(line)
+                date, hours, ticket, account, component, comment, is_overtime = parse_worklog_line(line)
             except ValueError as e:
                 print(f"Error processing line: {line}. {e}")
                 return
@@ -281,7 +296,8 @@ def process_worklog_file(file_path):
             # Accumulate hours for each date
             if date not in daily_hours:
                 daily_hours[date] = 0
-            daily_hours[date] += float(hours)
+            if not is_overtime:
+                daily_hours[date] += hours
             
             # Store worklog details for later processing
             if date not in dates_processed:
@@ -289,7 +305,7 @@ def process_worklog_file(file_path):
             dates_processed[date].append((ticket, float(hours), account, component, comment))
     
     # Determine the date range for validation
-    all_dates = list(daily_hours.keys())
+    all_dates = list(dates_processed.keys())
     if all_dates:
         start_date = min(all_dates)
         end_date = max(all_dates)
@@ -298,7 +314,7 @@ def process_worklog_file(file_path):
         working_days = set()
 
     # Validate worklogs, ensuring no worklogs on non-working days
-    valid_dates = validate_worklogs(daily_hours, working_days)
+    valid_dates = validate_worklogs(all_dates, daily_hours, working_days)
     
     # Process worklogs only for valid dates
     for date in valid_dates:
@@ -353,8 +369,8 @@ def process_worklog_file(file_path):
             print(f"No changes in worklogs for {date}. Skipping update.")
 
 def validate_worklog_file(file_path):
-    dates_processed = {}
     daily_hours = {}
+    all_dates = set()
     
     with open(file_path, "r") as f:
         for line in f:
@@ -362,18 +378,19 @@ def validate_worklog_file(file_path):
             if not line or line.startswith("#"):  # Skip empty lines and comments
                 continue
             try:
-                date, hours, ticket, account, component, comment = parse_worklog_line(line)
+                date, hours, ticket, account, component, comment, is_overtime = parse_worklog_line(line)
             except ValueError as e:
                 print(f"Error processing line: {line}. {e}")
                 return
 
+            all_dates.add(date)
             # Accumulate hours for each date
-            if date not in daily_hours:
-                daily_hours[date] = 0
-            daily_hours[date] += float(hours)
+            if not is_overtime:
+                if date not in daily_hours:
+                    daily_hours[date] = 0
+                daily_hours[date] += hours
     
     # Determine the date range for validation
-    all_dates = list(daily_hours.keys())
     if all_dates:
         start_date = min(all_dates)
         end_date = max(all_dates)
@@ -383,7 +400,7 @@ def validate_worklog_file(file_path):
 
     # Validate worklogs, ensuring no worklogs on non-working days
     try:
-        validate_worklogs(daily_hours, working_days)
+        validate_worklogs(sorted(all_dates), daily_hours, working_days)
         print("Worklogs are valid.")
     except ValueError as e:
         print(f"Validation error: {e}")
