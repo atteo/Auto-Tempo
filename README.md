@@ -70,7 +70,7 @@ The script is run from the command line using `python autotempo.py <command> [op
 *   **`validate <file>`**:
     *   Validates the specified worklog file (`.jira` file).
     *   Checks for correct line format.
-    *   Ensures the total hours logged for each working day equals 8.
+    *   Ensures the total non-overtime hours logged for each working day equals 8 and no non-overtime hours on non-working days.
     *   Reports errors if validation fails. Does *not* interact with JIRA beyond fetching working days.
     *   Example: `python autotempo.py validate 2025-05.jira`
 
@@ -98,16 +98,17 @@ Each line represents a single worklog entry. Comments start with `#`.
 YYYY-MM-DD H.H JIRA-TICKET "Description of work"
 YYYY-MM-DD H.H keyword "Comment for keyword task"
 YYYY-MM-DD H.H ANOTHER-TICKET "Work on another ticket" account:SpecificAccount component:SpecificComponent
+YYYY-MM-DD +2.0 JIRA-TICKET "Overtime work"
 ```
 
 *   `date`: `YYYY-MM-DD` format.
-*   `hours`: Floating-point number (e.g., `8.0`, `1.5`).
+*   `hours`: Floating-point number (e.g., `8.0`, `1.5`). Prefix with `+` to mark as overtime (e.g., `+2.0`), which does not count towards the daily 8-hour total.
 *   `ticket/keyword`: Either a full JIRA ticket key (e.g., `PROJ-123`) or a keyword defined in `config.toml` (e.g., `meeting`).
 *   `"comment"`: The worklog comment, enclosed in double quotes.
 *   `[account:<override>]` (Optional): Overrides the default or keyword account.
 *   `[component:<override>]` (Optional): Overrides the default or keyword component.
 
-**Important:** The script validates that the total hours for each *working day* sum up to exactly 8.0 before applying changes.
+**Important:** The script validates that the total *non-overtime* hours for each *working day* sum up to exactly 8.0 and that no non-overtime hours are logged on non-working days before applying changes. Overtime can be logged on any day.
 
 ## Typical Workflow
 
