@@ -48,10 +48,30 @@ ticket = "INTERNAL-456"
 account = "001-GEN"
 component = "Learning"
 
+[keyword.scrum]
+ticket = "INTERNAL-123"
+account = "001-GEN"
+component = "Meetings"
+
 # Define default account/component for specific JIRA projects (optional)
 [project.PROJ]
 account = "002-PROJ"
 component = "Project"
+
+# Automatic worklogs (optional)
+# day_of_week can be a comma-separated list of days (e.g., "Monday,Wednesday,Friday")
+# or ranges (e.g., "Mon-Fri"). Short names are also supported (e.g. "Mon", "Tue").
+# [[automatic]]
+# day_of_week = "Mon-Thu"
+# worklogs = ["0.25 scrum \"Daily Scrum\""]
+#
+# [[automatic]]
+# day_of_week = "Friday"
+# worklogs = [
+#   "0.25 scrum \"Daily Scrum\"",
+#   "1.0 scrum \"Sprint Planning\"",
+#   "0.5 scrum \"Sprint Retro\""
+# ]
 """
     print("Configuration file 'config.toml' not found.")
     print("")
@@ -185,6 +205,47 @@ def add_worklog(ticket, hours, account, component, date, comment=""):
     except requests.exceptions.RequestException as e:
         raise FatalError(f"Failed to log work for {ticket} on {date}: {e}", e)
 
+def parse_day_of_week(day_of_week_str):
+    """
+    Parses a day of week string which can contain comma-separated values,
+    ranges, and short names.
+    Returns a set of lowercase full day names.
+    """
+    days_of_week_map = {
+        "mon": "monday", "tue": "tuesday", "wed": "wednesday",
+        "thu": "thursday", "fri": "friday", "sat": "saturday",
+        "sun": "sunday",
+        "monday": "monday", "tuesday": "tuesday", "wednesday": "wednesday",
+        "thursday": "thursday", "friday": "friday", "saturday": "saturday",
+        "sunday": "sunday"
+    }
+    ordered_days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    
+    selected_days = set()
+    parts = day_of_week_str.lower().replace(" ", "").split(',')
+    
+    for part in parts:
+        if '-' in part:
+            try:
+                start_day_str, end_day_str = part.split('-', 1)
+                start_day = days_of_week_map.get(start_day_str)
+                end_day = days_of_week_map.get(end_day_str)
+                
+                if start_day and end_day:
+                    start_index = ordered_days.index(start_day)
+                    end_index = ordered_days.index(end_day)
+                    if start_index <= end_index:
+                        for i in range(start_index, end_index + 1):
+                            selected_days.add(ordered_days[i])
+            except ValueError:
+                continue # ignore malformed ranges
+        else:
+            day = days_of_week_map.get(part)
+            if day:
+                selected_days.add(day)
+                
+    return selected_days
+
 def generate_template(month):
     # Determine the first and last day of the month
     start_date = f"{month}-01"
@@ -194,16 +255,49 @@ def generate_template(month):
     # Get working days for the month
     working_days = get_working_days(start_date, end_date)
 
+    # Load automatic worklogs from config
+    automatic_worklogs = config.get("automatic", [])
+
     # Generate template
     template_lines = []
     for day in sorted(working_days):
-        template_lines.append(f"{day} 8.0 jira-ticket \"comment\"")
+        day_dt = datetime.datetime.strptime(day, "%Y-%m-%d")
+        day_of_week_name = day_dt.strftime('%A')
+        
+        day_lines = []
+        total_auto_hours = 0.0
+
+        for auto_log in automatic_worklogs:
+            day_of_week_spec = auto_log.get('day_of_week', '')
+            applicable_days = parse_day_of_week(day_of_week_spec)
+            if day_of_week_name.lower() in applicable_days:
+                for worklog_line in auto_log.get('worklogs', []):
+                    if not worklog_line:
+                        continue
+                    day_lines.append(f"{day} {worklog_line}")
+                    try:
+                        hours_str = worklog_line.split()[0]
+                        hours = float(hours_str)
+                        if not hours_str.startswith('+'):
+                            total_auto_hours += hours
+                    except (ValueError, IndexError):
+                        print(f"Warning: could not parse hours from automatic worklog: '{worklog_line}'. Skipping for hour calculation.")
+        
+        if day_lines:
+            remaining_hours = 8.0 - total_auto_hours
+            if remaining_hours > 0:
+                day_lines.append(f"{day} {remaining_hours:.1f} jira-ticket \"comment\"")
+            elif remaining_hours < 0:
+                print(f"Warning: total hours for non-overtime automatic worklogs on {day} ({day_of_week_name}) exceeds 8 hours.")
+            template_lines.extend(day_lines)
+        else:
+            template_lines.append(f"{day} 8.0 jira-ticket \"comment\"")
 
     # Output template
     template_content = (
-        "# date hours jira-ticket \"comment\" [account:<account>] [component:<component>]\n"
+        "# date hours jira-ticket [\"comment\"] [account:<account>] [component:<component>]\n"
         "# or\n"
-        "# date hours <keyword> \"comment\" [account:<account>] [component:<component>]\n"
+        "# date hours <keyword> [\"comment\"] [account:<account>] [component:<component>]\n"
         "#\n"
         "# where <keyword> is one of: interview, scrum, training, etc\n"
         "# See the definitions of keywords in config.toml\n\n"
