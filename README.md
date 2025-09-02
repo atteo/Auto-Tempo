@@ -59,6 +59,12 @@ component = "Learning"
 [project.PROJ]
 account = "002-PROJ"
 component = "Project"
+
+# Automatic worklogs for recurring tasks (optional).
+# See the "Automatic Worklogs" section for more details.
+[[automatic]]
+day_of_week = "Mon-Fri"
+worklogs = ["0.25 scrum \"Daily Scrum\""]
 ```
 
 **Explanation:**
@@ -136,4 +142,41 @@ YYYY-MM-DD +2.0 JIRA-TICKET "Overtime work"
     Review the proposed changes (deletions/additions) for each day and confirm with `yes` if correct.
 4.  **(Optional) Version Control:** Commit the `.jira` file to Git to keep a history of your worklogs.
 
+## Feature details
+
+### Automatic Worklogs
+
+You can configure automatic worklogs for recurring tasks, such as daily meetings. These are defined in `config.toml` using `[[automatic]]` sections (an array of tables in TOML). When you run the `generate` command, these worklogs will be automatically added to the template for the specified days of the week.
+
+Here is a more detailed example configuration:
+
+```toml
+# In your config.toml
+
+# Log "Daily Scrum" for 15 minutes from Monday to Thursday
+[[automatic]]
+day_of_week = "Mon-Thu"
+worklogs = ["0.25 scrum \"Daily Scrum\""]
+
+# Log multiple meetings on Fridays
+[[automatic]]
+day_of_week = "Friday"
+worklogs = [
+  "0.25 scrum \"Daily Scrum\"",
+  "1.0 scrum \"Sprint Planning\"",
+  "0.5 scrum \"Sprint Retro\""
+]
 ```
+
+**Configuration Details:**
+
+*   `[[automatic]]`: Each block defines a rule for one or more days. You can have multiple blocks.
+*   `day_of_week`: A string specifying which days this rule applies to. It is highly flexible:
+    *   Comma-separated list: `"Monday,Wednesday,Friday"`
+    *   Range: `"Mon-Fri"`
+    *   Single day: `"Tuesday"`
+    *   Short names (`Mon`, `Tue`) and full names (`Monday`, `Tuesday`) are supported.
+*   `worklogs`: A list of strings. Each string is a partial worklog entry (`hours keyword/ticket "comment"`) that will be added to the template.
+
+When the `generate` command runs, it will calculate the total hours from automatic worklogs for each day and subtract it from the default 8 hours, filling in the remainder.
+
