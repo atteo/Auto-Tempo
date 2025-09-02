@@ -6,6 +6,18 @@ This script helps manage JIRA worklogs using the Tempo Timesheets API. It allows
 
 The primary goal of this tool is to simplify the process of logging time in JIRA, especially when dealing with recurring tasks, specific project/account/component combinations, or when needing to log time based on Git commit history. It provides a text-based interface for managing worklogs, which can be version-controlled and easily edited.
 
+## Features
+
+*   **Text-Based Worklog Management**: Manage your JIRA worklogs in a simple `.jira` text file, which is easy to edit and can be committed to version control.
+*   **Template Generation**: The `generate` command creates a worklog template for any given month, pre-populated with all your working days as fetched from Tempo.
+*   **Automatic Worklogs**: Define recurring tasks (like daily scrums or weekly meetings) in your `config.toml`. These are automatically added to your monthly template, saving you repetitive data entry. The day-of-week scheduling is flexible, supporting ranges (`Mon-Fri`) and lists (`Monday, Wednesday`).
+*   **Keyword Shortcuts**: Create short keywords in `config.toml` for common tasks (e.g., `meeting`, `training`). Using a keyword in your worklog file automatically expands to the correct JIRA ticket, account, and component.
+*   **Project-Based Defaults**: Simplify your worklog entries by defining default `account` and `component` values for specific JIRA projects in your configuration.
+*   **Smart Validation**: Before applying, the script validates your worklog file to ensure that total non-overtime hours sum to 8 for each working day and that no time is logged on non-working days.
+*   **Idempotent Sync**: The `apply` command intelligently compares your local file with existing worklogs in JIRA for each day. It only performs updates (delete and add) if it detects a difference, and prompts for confirmation.
+*   **Overtime Logging**: Easily log overtime hours by prefixing the hours with a `+`. Overtime entries are exempt from the daily 8-hour validation.
+*   **Git Integration**: Use the `inspect` command to generate a draft worklog based on your Git commit history for a specific repository.
+
 ## Installation
 
 1.  **Clone the repository:**
